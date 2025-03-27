@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import newJira.system.dto.LoginRequest;
 import newJira.system.dto.RegisterRequest;
 import newJira.system.dto.UserDto;
+import newJira.system.entity.Role;
 import newJira.system.mapper.ManagementMapper;
 import newJira.system.entity.AppUser;
 import newJira.system.repository.UserRepository;
@@ -25,6 +26,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -75,6 +78,12 @@ public class AuthController {
         AppUser appUser = new AppUser();
         appUser.setEmail(registerRequest.getEmail());
         appUser.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+
+        Role userRole = Optional.ofNullable(registerRequest.getRole())
+                .map(String::toUpperCase)
+                .map(Role::valueOf)
+                .orElse(Role.USER);
+        appUser.setRole(userRole);
 
         UserDto userDto = managementMapper.toUserDto(userRepository.save(appUser));
         log.info("User registered successfully: {}", appUser.getEmail());
