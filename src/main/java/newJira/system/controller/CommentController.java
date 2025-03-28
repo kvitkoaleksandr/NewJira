@@ -3,10 +3,10 @@ package newJira.system.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import newJira.system.dto.CommentDto;
-import newJira.system.mapper.ManagementMapper;
-import newJira.system.entity.Comment;
 import newJira.system.service.CommentService;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,31 +17,28 @@ import java.util.List;
 @RequestMapping("/api/comments")
 public class CommentController {
     private final CommentService commentService;
-    private final ManagementMapper managementMapper;
 
-    @Operation(summary = "Create a new comment")
+    @Operation(summary = "Создание нового комментария")
+    @SecurityRequirement(name = "BearerAuth")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Comment created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")
+            @ApiResponse(responseCode = "200", description = "Комментарий успешно создан"),
+            @ApiResponse(responseCode = "400", description = "Некорректные входные данные"),
+            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
     })
     @PostMapping
-    public CommentDto createComment(CommentDto commentDto) {
-        Comment comment = managementMapper.toComment(commentDto);
-        Comment createdComment = commentService.createComment(comment);
-        return managementMapper.toCommentDto(createdComment);
+    public CommentDto createComment(@Valid @RequestBody CommentDto commentDto) {
+        return commentService.createComment(commentDto);
     }
 
-    @Operation(summary = "Get comments by task ID")
+    @Operation(summary = "Получение комментариев по ID задачи")
+    @SecurityRequirement(name = "BearerAuth")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Comments received successfully"),
-            @ApiResponse(responseCode = "404", description = "Task not found"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")
+            @ApiResponse(responseCode = "200", description = "Комментарии успешно получены"),
+            @ApiResponse(responseCode = "404", description = "Задача не найдена"),
+            @ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера")
     })
     @GetMapping("/task/{taskId}")
     public List<CommentDto> getCommentsByTaskId(@PathVariable Long taskId) {
-        return commentService.getCommentsByTaskId(taskId).stream()
-                .map(managementMapper::toCommentDto)
-                .toList();
+        return commentService.getCommentsByTaskId(taskId);
     }
 }
