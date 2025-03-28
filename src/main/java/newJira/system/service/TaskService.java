@@ -6,7 +6,8 @@ import newJira.system.dto.TaskDto;
 import newJira.system.dto.TaskFilterRequestDto;
 import newJira.system.entity.AppUser;
 import newJira.system.entity.Task;
-import newJira.system.mapper.ManagementMapper;
+import newJira.system.mapper.TaskMapper;
+import newJira.system.mapper.UserMapper;
 import newJira.system.repository.TaskRepository;
 import newJira.system.repository.UserRepository;
 import org.springframework.data.domain.Page;
@@ -21,13 +22,25 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TaskService {
     private final TaskRepository taskRepository;
-    private final ManagementMapper managementMapper;
+    private final TaskMapper taskMapper;
     private final UserRepository userRepository;
 
     public TaskDto createTask(TaskDto taskDto) {
-        Task task = managementMapper.toTask(taskDto);
+        Task task = taskMapper.toTask(taskDto);
+
+        AppUser author = userRepository.findById(taskDto.getAuthorId())
+                .orElseThrow(() -> new EntityNotFoundException("Автор с ID " + taskDto.getAuthorId() + " не найден"));
+        task.setAuthor(author);
+
+        if (taskDto.getExecutorId() != null) {
+            AppUser executor = userRepository.findById(taskDto.getExecutorId()).orElseThrow(
+                    () -> new EntityNotFoundException("Исполнитель с ID " + taskDto.getExecutorId() + " не найден")
+            );
+            task.setExecutor(executor);
+        }
+
         Task savedTask = taskRepository.save(task);
-        return managementMapper.toTaskDto(savedTask);
+        return taskMapper.toTaskDto(savedTask);
     }
 
     public TaskDto updateTask(Long taskId, TaskDto taskDto) {
@@ -43,7 +56,7 @@ public class TaskService {
         task.setExecutor(executor);
 
         Task updatedTask = taskRepository.save(task);
-        return managementMapper.toTaskDto(updatedTask);
+        return taskMapper.toTaskDto(updatedTask);
     }
 
     public void deleteTask(Long taskId) {
@@ -56,14 +69,14 @@ public class TaskService {
     public List<TaskDto> getTasksByAuthor(Long authorId) {
         List<Task> tasks = taskRepository.findByAuthorId(authorId);
         return tasks.stream()
-                .map(managementMapper::toTaskDto)
+                .map(taskMapper::toTaskDto)
                 .toList();
     }
 
     public List<TaskDto> getTasksByExecutors(Long executorId) {
         List<Task> tasks = taskRepository.findByExecutorId(executorId);
         return tasks.stream()
-                .map(managementMapper::toTaskDto)
+                .map(taskMapper::toTaskDto)
                 .toList();
     }
 
@@ -82,6 +95,6 @@ public class TaskService {
             tasks = taskRepository.findAll(pageable);
         }
 
-        return tasks.map(managementMapper::toTaskDto);
+        return tasks.map(taskMapper::toTaskDto);
     }
 }

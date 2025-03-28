@@ -39,6 +39,7 @@ public class TaskController {
     }
 
     @Operation(summary = "Обновление существующей задачи")
+    @SecurityRequirement(name = "BearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Задача успешно обновлена"),
             @ApiResponse(responseCode = "404", description = "Задача не найдена"),
@@ -53,6 +54,7 @@ public class TaskController {
     }
 
     @Operation(summary = "Получение задач по ID автора")
+    @SecurityRequirement(name = "BearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Задачи успешно получены"),
             @ApiResponse(responseCode = "404", description = "Автор не найден")
@@ -64,6 +66,7 @@ public class TaskController {
     }
 
     @Operation(summary = "Получение задач по ID исполнителя")
+    @SecurityRequirement(name = "BearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Задачи успешно получены"),
             @ApiResponse(responseCode = "404", description = "Исполнитель не найден")
@@ -77,6 +80,7 @@ public class TaskController {
     }
 
     @Operation(summary = "Удаление задачи по ID")
+    @SecurityRequirement(name = "BearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Задача успешно удалена"),
             @ApiResponse(responseCode = "404", description = "Задача не найдена")
@@ -89,6 +93,7 @@ public class TaskController {
     }
 
     @Operation(summary = "Получить список задач с пагинацией")
+    @SecurityRequirement(name = "BearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Задачи успешно получены"),
             @ApiResponse(responseCode = "400", description = "Некорректные входные данные")
