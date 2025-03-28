@@ -21,7 +21,6 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
