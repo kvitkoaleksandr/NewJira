@@ -12,7 +12,7 @@ import java.util.List;
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
-        private String tittle;
+        private String title;
 
         @Enumerated(EnumType.STRING)
         private Status status;

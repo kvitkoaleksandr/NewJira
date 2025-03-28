@@ -3,105 +3,105 @@ package newJira.system.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import newJira.system.dto.TaskDto;
+import newJira.system.dto.TaskFilterRequestDto;
 import newJira.system.mapper.ManagementMapper;
-import newJira.system.entity.Task;
+import newJira.system.security.RoleChecker;
 import newJira.system.service.TaskService;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/tasks")
 public class TaskController {
     private final TaskService taskService;
-    private final ManagementMapper managementMapper;
+    private final RoleChecker roleChecker;
 
-    @Operation(summary = "Create a new task")
+    @Operation(summary = "Создание новой задачи")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Task created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input data")
+            @ApiResponse(responseCode = "200", description = "Задача успешно создана"),
+            @ApiResponse(responseCode = "400", description = "Неверные входные данные")
     })
     @PostMapping
-    public TaskDto createTask(@Valid @RequestBody TaskDto taskDto) {
-        Task task = managementMapper.toTask(taskDto);
-        Task createdTask = taskService.createTask(task);
-        return managementMapper.toTaskDto(createdTask);
+    public TaskDto createTask(@Valid @RequestBody TaskDto taskDto, HttpServletRequest request) {
+        checkAdminAccess(request);
+        return taskService.createTask(taskDto);
     }
 
-    @Operation(summary = "Update an existing task")
+    @Operation(summary = "Обновление существующей задачи")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Task updated successfully"),
-            @ApiResponse(responseCode = "404", description = "Task not found"),
-            @ApiResponse(responseCode = "400", description = "Invalid input data")
+            @ApiResponse(responseCode = "200", description = "Задача успешно обновлена"),
+            @ApiResponse(responseCode = "404", description = "Задача не найдена"),
+            @ApiResponse(responseCode = "400", description = "Неверные входные данные")
     })
     @PutMapping("/{taskId}")
-    public TaskDto updateTask(@PathVariable Long taskId, @Valid @RequestBody TaskDto taskDetails) {
-        Task task = managementMapper.toTask(taskDetails);
-        Task updateTask = taskService.updateTask(taskId, task);
-        return managementMapper.toTaskDto(updateTask);
+    public TaskDto updateTask(@PathVariable Long taskId,
+                              @Valid @RequestBody TaskDto taskDto,
+                              HttpServletRequest request) {
+        checkAdminAccess(request);
+        return taskService.updateTask(taskId, taskDto);
     }
 
-    @Operation(summary = "Get tasks by author ID")
+    @Operation(summary = "Получение задач по ID автора")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Tasks retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "Author not found")
+            @ApiResponse(responseCode = "200", description = "Задачи успешно получены"),
+            @ApiResponse(responseCode = "404", description = "Автор не найден")
     })
     @GetMapping("/author/{authorId}")
-    public List<TaskDto> getTasksByAuthor(@PathVariable Long authorId) {
-        return taskService.getTasksByAuthor(authorId).stream()
-                .map(managementMapper::toTaskDto)
-                .toList();
+    public List<TaskDto> getTasksByAuthor(@PathVariable Long authorId, HttpServletRequest request) {
+        checkAdminAccess(request);
+        return taskService.getTasksByAuthor(authorId);
     }
 
-    @Operation(summary = "Get tasks by executor ID")
+    @Operation(summary = "Получение задач по ID исполнителя")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Tasks retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "Executor not found")
+            @ApiResponse(responseCode = "200", description = "Задачи успешно получены"),
+            @ApiResponse(responseCode = "404", description = "Исполнитель не найден")
     })
     @GetMapping("/executor/{executorId}")
     public List<TaskDto> getTasksByExecutors(@PathVariable Long executorId) {
-        return taskService.getTasksByExecutors(executorId).stream()
-                .map(managementMapper::toTaskDto)
-                .toList();
+        if (executorId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID исполнителя не может быть пустым");
+        }
+        return taskService.getTasksByExecutors(executorId);
     }
 
-    @Operation(summary = "Delete a task by ID")
+    @Operation(summary = "Удаление задачи по ID")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Task deleted successfully"),
-            @ApiResponse(responseCode = "404", description = "Task not found")
+            @ApiResponse(responseCode = "204", description = "Задача успешно удалена"),
+            @ApiResponse(responseCode = "404", description = "Задача не найдена")
     })
     @DeleteMapping("/{taskId}")
-    public ResponseEntity<Void> deleteTask(@PathVariable Long taskId) {
+    public ResponseEntity<Void> deleteTask(@PathVariable Long taskId, HttpServletRequest request) {
+        checkAdminAccess(request);
         taskService.deleteTask(taskId);
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Get paginated tasks")
+    @Operation(summary = "Получить список задач с пагинацией")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Tasks retrieved successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input data")
+            @ApiResponse(responseCode = "200", description = "Задачи успешно получены"),
+            @ApiResponse(responseCode = "400", description = "Некорректные входные данные")
     })
-    @GetMapping
-    public Page<TaskDto> getTasks(
-            @RequestParam Optional<String> author,
-            @RequestParam Optional<String> executor,
-            @RequestParam Integer page,
-            @RequestParam Integer size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Task> tasks = taskService.getTasks(author.orElseThrow(() ->
-                        new IllegalArgumentException("Author is required")),
-                executor.orElseThrow(() ->
-                        new IllegalArgumentException("Executor is required")),
-                pageable);
-        return tasks.map(managementMapper::toTaskDto);
+    @PostMapping("/filter")
+    public Page<TaskDto> filterTasks(@Valid @RequestBody TaskFilterRequestDto request,
+                                     HttpServletRequest servletRequest) {
+        checkAdminAccess(servletRequest);
+        return taskService.getTasks(request);
+    }
+
+    private void checkAdminAccess(HttpServletRequest request) {
+        if (!roleChecker.isAdmin(request)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Только ADMIN имеет доступ к этой операции");
+        }
     }
 }

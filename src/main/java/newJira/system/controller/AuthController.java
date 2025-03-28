@@ -7,8 +7,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import newJira.system.dto.LoginRequest;
-import newJira.system.dto.RegisterRequest;
+import newJira.system.dto.LoginRequestDto;
+import newJira.system.dto.RegisterRequestDto;
 import newJira.system.dto.UserDto;
 import newJira.system.entity.Role;
 import newJira.system.mapper.ManagementMapper;
@@ -47,18 +47,18 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "Invalid email or password")
     })
     @PostMapping("/login")
-    public ResponseEntity<Object> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<Object> authenticateUser(@Valid @RequestBody LoginRequestDto loginRequestDto) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            loginRequest.getEmail(),
-                            loginRequest.getPassword()
+                            loginRequestDto.getEmail(),
+                            loginRequestDto.getPassword()
                     )
             );
             String jwt = jwtTokenProvider.generateToken(authentication);
             return ResponseEntity.ok(jwt);
         } catch (Exception e) {
-            log.error("Authentication failed for user: {}", loginRequest.getEmail(), e);
+            log.error("Authentication failed for user: {}", loginRequestDto.getEmail(), e);
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
     }
@@ -69,17 +69,17 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Email is already in use")
     })
     @PostMapping("/register")
-    public ResponseEntity<UserDto> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
-        if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            log.warn("Attempt to register with existing email: {}", registerRequest.getEmail());
+    public ResponseEntity<UserDto> registerUser(@Valid @RequestBody RegisterRequestDto registerRequestDto) {
+        if (userRepository.existsByEmail(registerRequestDto.getEmail())) {
+            log.warn("Attempt to register with existing email: {}", registerRequestDto.getEmail());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already in use");
         }
 
         AppUser appUser = new AppUser();
-        appUser.setEmail(registerRequest.getEmail());
-        appUser.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+        appUser.setEmail(registerRequestDto.getEmail());
+        appUser.setPassword(passwordEncoder.encode(registerRequestDto.getPassword()));
 
-        Role userRole = Optional.ofNullable(registerRequest.getRole())
+        Role userRole = Optional.ofNullable(registerRequestDto.getRole())
                 .map(String::toUpperCase)
                 .map(Role::valueOf)
                 .orElse(Role.USER);
