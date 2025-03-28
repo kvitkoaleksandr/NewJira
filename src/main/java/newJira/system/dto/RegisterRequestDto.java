@@ -9,11 +9,13 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LoginRequest {
-    @NotEmpty(message = "Email is required")
+public class RegisterRequestDto {
+    @NotEmpty(message = "Name is required")
     @Email(message = "email should be valid")
     private String email;
 
     @NotEmpty(message = "Password is required")
     private String password;
+
+    private String role;
 }
