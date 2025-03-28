@@ -15,7 +15,7 @@ import newJira.system.entity.Status;
 public class TaskDto {
 
     private Long id;
-    @NotEmpty(message = "Tittle is can't be required")
+    @NotEmpty(message = "Title is can't be required")
     private String title;
     private Status status = Status.TO_DO;
     @NotNull(message = "Priority can't be null")
