@@ -13,7 +13,7 @@ import newJira.system.entity.Status;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TaskDto {
-    @NotNull(message = "Id can't be null")
+
     private Long id;
     @NotEmpty(message = "Tittle is can't be required")
     private String title;

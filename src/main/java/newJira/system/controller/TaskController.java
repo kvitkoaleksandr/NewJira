@@ -3,12 +3,12 @@ package newJira.system.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import newJira.system.dto.TaskDto;
 import newJira.system.dto.TaskFilterRequestDto;
-import newJira.system.mapper.ManagementMapper;
 import newJira.system.security.RoleChecker;
 import newJira.system.service.TaskService;
 import org.springframework.data.domain.Page;
@@ -27,6 +27,7 @@ public class TaskController {
     private final RoleChecker roleChecker;
 
     @Operation(summary = "Создание новой задачи")
+    @SecurityRequirement(name = "BearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Задача успешно создана"),
             @ApiResponse(responseCode = "400", description = "Неверные входные данные")

@@ -1,18 +1,20 @@
 package newJira.system.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import newJira.system.dto.AuthResponseDto;
 import newJira.system.dto.LoginRequestDto;
 import newJira.system.dto.RegisterRequestDto;
-import newJira.system.dto.UserDto;
+import newJira.system.entity.AppUser;
 import newJira.system.entity.Role;
 import newJira.system.mapper.ManagementMapper;
-import newJira.system.entity.AppUser;
 import newJira.system.repository.UserRepository;
 import newJira.system.security.JwtTokenProvider;
 import org.springframework.http.HttpStatus;
@@ -41,38 +43,37 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final ManagementMapper managementMapper;
 
-    @Operation(summary = "User authentication", description = "Login and get JWT token")
+    @Operation(summary = "Авторизация пользователя")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Authentication successful"),
-            @ApiResponse(responseCode = "401", description = "Invalid email or password")
+            @ApiResponse(responseCode = "200", description = "Вход выполнен успешно",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = "{ \"token\": \"eyJhbGciOiJIUzI1NiIs...\" }"))),
+            @ApiResponse(responseCode = "401", description = "Неверный email или пароль")
     })
     @PostMapping("/login")
-    public ResponseEntity<Object> authenticateUser(@Valid @RequestBody LoginRequestDto loginRequestDto) {
+    public ResponseEntity<AuthResponseDto> authenticateUser(@Valid @RequestBody LoginRequestDto loginRequestDto) {
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            loginRequestDto.getEmail(),
-                            loginRequestDto.getPassword()
-                    )
+            AuthResponseDto responseDto = authenticateAndReturnToken(
+                    loginRequestDto.getEmail(),
+                    loginRequestDto.getPassword()
             );
-            String jwt = jwtTokenProvider.generateToken(authentication);
-            return ResponseEntity.ok(jwt);
+            return ResponseEntity.ok(responseDto);
         } catch (Exception e) {
-            log.error("Authentication failed for user: {}", loginRequestDto.getEmail(), e);
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+            log.error("Ошибка входа для пользователя: {}", loginRequestDto.getEmail(), e);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Неверный email или пароль");
         }
     }
-
-    @Operation(summary = "User registration", description = "Register and get JWT token")
+    @Operation(summary = "Регистрация нового пользователя")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "User registered successfully"),
-            @ApiResponse(responseCode = "400", description = "Email is already in use")
+            @ApiResponse(responseCode = "201", description = "Пользователь успешно зарегистрирован и вошёл в систему",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = "{ \"token\": \"eyJhbGciOiJIUzI1NiIs...\" }"))),
+            @ApiResponse(responseCode = "400", description = "Email уже используется")
     })
     @PostMapping("/register")
-    public ResponseEntity<UserDto> registerUser(@Valid @RequestBody RegisterRequestDto registerRequestDto) {
+    public ResponseEntity<AuthResponseDto> registerUser(@Valid @RequestBody RegisterRequestDto registerRequestDto) {
         if (userRepository.existsByEmail(registerRequestDto.getEmail())) {
-            log.warn("Attempt to register with existing email: {}", registerRequestDto.getEmail());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already in use");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email уже используется");
         }
 
         AppUser appUser = new AppUser();
@@ -85,8 +86,21 @@ public class AuthController {
                 .orElse(Role.USER);
         appUser.setRole(userRole);
 
-        UserDto userDto = managementMapper.toUserDto(userRepository.save(appUser));
-        log.info("User registered successfully: {}", appUser.getEmail());
-        return new ResponseEntity<>(userDto, HttpStatus.CREATED);
+        userRepository.save(appUser);
+
+        AuthResponseDto responseDto = authenticateAndReturnToken(
+                registerRequestDto.getEmail(),
+                registerRequestDto.getPassword()
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+    }
+
+    private AuthResponseDto authenticateAndReturnToken(String email, String rawPassword) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(email, rawPassword)
+        );
+        String jwt = jwtTokenProvider.generateToken(authentication);
+        return new AuthResponseDto(jwt);
     }
 }
