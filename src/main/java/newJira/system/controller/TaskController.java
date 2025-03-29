@@ -7,21 +7,23 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import newJira.system.dto.TaskDto;
 import newJira.system.dto.TaskFilterRequestDto;
+import newJira.system.exception.custom.BadRequestException;
+import newJira.system.exception.custom.ForbiddenException;
 import newJira.system.security.RoleChecker;
 import newJira.system.service.TaskService;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/tasks")
+@Slf4j
 public class TaskController {
     private final TaskService taskService;
     private final RoleChecker roleChecker;
@@ -74,7 +76,7 @@ public class TaskController {
     @GetMapping("/executor/{executorId}")
     public List<TaskDto> getTasksByExecutors(@PathVariable Long executorId) {
         if (executorId == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "ID исполнителя не может быть пустым");
+            throw new BadRequestException("ID исполнителя не может быть пустым");
         }
         return taskService.getTasksByExecutors(executorId);
     }
@@ -107,7 +109,8 @@ public class TaskController {
 
     private void checkAdminAccess(HttpServletRequest request) {
         if (!roleChecker.isAdmin(request)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Только ADMIN имеет доступ к этой операции");
+            log.warn("Доступ запрещён: пользователь не является администратором. Запрос: {}", request.getRequestURI());
+            throw new ForbiddenException("Только ADMIN имеет доступ к этой операции");
         }
     }
 }
