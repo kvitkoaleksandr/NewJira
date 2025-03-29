@@ -7,9 +7,7 @@ spring:
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
-    test-on-borrow: false
-    test-while-idle: true
-    validation-query: SELECT 1
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -18,12 +16,17 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         packages-to-scan: newJira.system.entity
+
   liquibase:
     change-log: classpath:/db/changelog/db.changelog-master.yml
+    enabled: false
+
   tomcat:
     uri-encoding: UTF-8
+
   main:
     allow-bean-definition-overriding: true
+
   springdoc:
     api-docs:
       enabled: true

@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import newJira.system.dto.CommentDto;
 import newJira.system.entity.Comment;
 import newJira.system.mapper.CommentMapper;
-import newJira.system.mapper.ManagementMapper;
 import newJira.system.repository.CommentRepository;
 import org.springframework.stereotype.Service;
 
