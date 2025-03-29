@@ -2,9 +2,9 @@ package newJira.system.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import newJira.system.dto.AuthResponseDto;
-import newJira.system.dto.LoginRequestDto;
-import newJira.system.dto.RegisterRequestDto;
+import newJira.system.dto.auth.AuthResponseDto;
+import newJira.system.dto.auth.LoginRequestDto;
+import newJira.system.dto.auth.RegisterRequestDto;
 import newJira.system.entity.AppUser;
 import newJira.system.entity.Role;
 import newJira.system.exception.custom.BadRequestException;
@@ -16,6 +16,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -40,6 +41,7 @@ public class AuthService {
         }
     }
 
+    @Transactional
     public AuthResponseDto register(RegisterRequestDto registerRequestDto) {
         if (userRepository.existsByEmail(registerRequestDto.getEmail())) {
             throw new BadRequestException("Email уже используется");

@@ -1,4 +1,4 @@
-package newJira.system.dto;
+package newJira.system.dto.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
