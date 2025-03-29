@@ -1,13 +1,14 @@
 package newJira.system.service;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import newJira.system.dto.TaskDto;
-import newJira.system.dto.TaskFilterRequestDto;
+import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import newJira.system.dto.task.TaskDto;
+import newJira.system.dto.task.TaskFilterRequestDto;
 import newJira.system.entity.AppUser;
 import newJira.system.entity.Task;
+import newJira.system.exception.custom.NotFoundException;
 import newJira.system.mapper.TaskMapper;
-import newJira.system.mapper.UserMapper;
 import newJira.system.repository.TaskRepository;
 import newJira.system.repository.UserRepository;
 import org.springframework.data.domain.Page;
@@ -20,22 +21,27 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TaskService {
     private final TaskRepository taskRepository;
     private final TaskMapper taskMapper;
     private final UserRepository userRepository;
 
+    @Transactional
     public TaskDto createTask(TaskDto taskDto) {
-        Task task = taskMapper.toTask(taskDto);
-
         AppUser author = userRepository.findById(taskDto.getAuthorId())
-                .orElseThrow(() -> new EntityNotFoundException("Автор с ID " + taskDto.getAuthorId() + " не найден"));
+                .orElseThrow(() -> {
+                    log.warn("Автор с ID {} не найден", taskDto.getAuthorId());
+                    return new NotFoundException("Автор с ID " + taskDto.getAuthorId() + " не найден");
+                });
+        Task task = taskMapper.toTask(taskDto);
         task.setAuthor(author);
 
         if (taskDto.getExecutorId() != null) {
-            AppUser executor = userRepository.findById(taskDto.getExecutorId()).orElseThrow(
-                    () -> new EntityNotFoundException("Исполнитель с ID " + taskDto.getExecutorId() + " не найден")
-            );
+            AppUser executor = userRepository.findById(taskDto.getExecutorId()).orElseThrow(() -> {
+                log.warn("Исполнитель с ID {} не найден", taskDto.getExecutorId());
+                return new NotFoundException("Исполнитель с ID " + taskDto.getExecutorId() + " не найден");
+            });
             task.setExecutor(executor);
         }
 
@@ -43,25 +49,31 @@ public class TaskService {
         return taskMapper.toTaskDto(savedTask);
     }
 
+    @Transactional
     public TaskDto updateTask(Long taskId, TaskDto taskDto) {
-        Task task = taskRepository.findById(taskId).orElseThrow(() ->
-                new EntityNotFoundException("Задача с ID " + taskId + " не найдена"));
+        Task task = taskRepository.findById(taskId).orElseThrow(() -> {
+            log.warn("Задача с ID {} не найдена", taskId);
+            return new NotFoundException("Задача с ID " + taskId + " не найдена");
+        });
         task.setTitle(taskDto.getTitle());
         task.setStatus(taskDto.getStatus());
         task.setPriority(taskDto.getPriority());
-        AppUser executor = userRepository.findById(taskDto.getExecutorId()).orElseThrow(
-                () -> new EntityNotFoundException("Пользователь с ID " + taskDto.getExecutorId() + " не найден")
-        );
 
+        AppUser executor = userRepository.findById(taskDto.getExecutorId()).orElseThrow(() -> {
+            log.warn("Исполнитель с ID {} не найден", taskDto.getExecutorId());
+            return new NotFoundException("Пользователь с ID " + taskDto.getExecutorId() + " не найден");
+        });
         task.setExecutor(executor);
 
         Task updatedTask = taskRepository.save(task);
         return taskMapper.toTaskDto(updatedTask);
     }
 
+    @Transactional
     public void deleteTask(Long taskId) {
         if (!taskRepository.existsById(taskId)) {
-            throw new EntityNotFoundException("Задача с ID " + taskId + " не найдена");
+            log.warn("Задача с ID {} не найдена", taskId);
+            throw new NotFoundException("Задача с ID " + taskId + " не найдена");
         }
         taskRepository.deleteById(taskId);
     }

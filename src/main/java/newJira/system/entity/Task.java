@@ -2,11 +2,13 @@ package newJira.system.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
     @Entity
     @Data
+    @NoArgsConstructor
     @Table(name = "tasks")
     public class Task {
         @Id

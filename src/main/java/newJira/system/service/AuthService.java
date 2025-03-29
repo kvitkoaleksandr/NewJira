@@ -1,25 +1,28 @@
 package newJira.system.service;
 
 import lombok.RequiredArgsConstructor;
-import newJira.system.dto.AuthResponseDto;
-import newJira.system.dto.LoginRequestDto;
-import newJira.system.dto.RegisterRequestDto;
+import lombok.extern.slf4j.Slf4j;
+import newJira.system.dto.auth.AuthResponseDto;
+import newJira.system.dto.auth.LoginRequestDto;
+import newJira.system.dto.auth.RegisterRequestDto;
 import newJira.system.entity.AppUser;
 import newJira.system.entity.Role;
+import newJira.system.exception.custom.BadRequestException;
+import newJira.system.exception.custom.UnauthorizedException;
 import newJira.system.repository.UserRepository;
 import newJira.system.security.JwtTokenProvider;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
@@ -33,13 +36,15 @@ public class AuthService {
                     loginRequestDto.getPassword()
             );
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Неверный email или пароль");
+            log.warn("Неудачная попытка входа для email: {}", loginRequestDto.getEmail());
+            throw new UnauthorizedException("Неверный email или пароль");
         }
     }
 
+    @Transactional
     public AuthResponseDto register(RegisterRequestDto registerRequestDto) {
         if (userRepository.existsByEmail(registerRequestDto.getEmail())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email уже используется");
+            throw new BadRequestException("Email уже используется");
         }
 
         AppUser appUser = new AppUser();
@@ -61,6 +66,7 @@ public class AuthService {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, rawPassword)
         );
+        log.info("Токен успешно сгенерирован для пользователя: {}", email);
         String jwt = jwtTokenProvider.generateToken(authentication);
         return new AuthResponseDto(jwt);
     }

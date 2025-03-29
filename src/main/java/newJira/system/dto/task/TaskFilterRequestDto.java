@@ -1,4 +1,4 @@
-package newJira.system.dto;
+package newJira.system.dto.task;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
