@@ -21,7 +21,7 @@ public class JwtTokenProvider {
     private final SecretKey jwtKey;
     private final UserRepository userRepository;
 
-    private static final long EXPIRATION = 1000 * 60 * 60 * 10; // 10 часов
+    private static final long EXPIRATION = 1000 * 60 * 60 * 10;
 
     public JwtTokenProvider(@Value("${security.jwt.secret}") String secret,
                             UserRepository userRepository) {
