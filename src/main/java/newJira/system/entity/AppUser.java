@@ -2,9 +2,11 @@ package newJira.system.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Data
+@NoArgsConstructor
 @Table(name = "users")
 public class AppUser {
     @Id
@@ -16,7 +18,4 @@ public class AppUser {
 
     private String email;
     private String password;
-
-    public AppUser() {
-    }
 }

@@ -1,9 +1,10 @@
 package newJira.system.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
-import newJira.system.dto.TaskDto;
-import newJira.system.dto.TaskFilterRequestDto;
+import newJira.system.dto.task.TaskDto;
+import newJira.system.dto.task.TaskFilterRequestDto;
 import newJira.system.entity.AppUser;
 import newJira.system.entity.Task;
 import newJira.system.exception.custom.NotFoundException;
@@ -26,6 +27,7 @@ public class TaskService {
     private final TaskMapper taskMapper;
     private final UserRepository userRepository;
 
+    @Transactional
     public TaskDto createTask(TaskDto taskDto) {
         AppUser author = userRepository.findById(taskDto.getAuthorId())
                 .orElseThrow(() -> {
@@ -47,6 +49,7 @@ public class TaskService {
         return taskMapper.toTaskDto(savedTask);
     }
 
+    @Transactional
     public TaskDto updateTask(Long taskId, TaskDto taskDto) {
         Task task = taskRepository.findById(taskId).orElseThrow(() -> {
             log.warn("Задача с ID {} не найдена", taskId);
@@ -66,6 +69,7 @@ public class TaskService {
         return taskMapper.toTaskDto(updatedTask);
     }
 
+    @Transactional
     public void deleteTask(Long taskId) {
         if (!taskRepository.existsById(taskId)) {
             log.warn("Задача с ID {} не найдена", taskId);

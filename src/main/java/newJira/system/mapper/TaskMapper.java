@@ -1,6 +1,6 @@
 package newJira.system.mapper;
 
-import newJira.system.dto.TaskDto;
+import newJira.system.dto.task.TaskDto;
 import newJira.system.entity.Task;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;

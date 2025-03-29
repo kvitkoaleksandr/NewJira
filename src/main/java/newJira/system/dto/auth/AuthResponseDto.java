@@ -1,4 +1,4 @@
-package newJira.system.dto;
+package newJira.system.dto.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
