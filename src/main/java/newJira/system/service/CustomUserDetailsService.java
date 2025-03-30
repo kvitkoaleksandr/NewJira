@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import newJira.system.entity.AppUser;
 import newJira.system.exception.custom.NotFoundException;
 import newJira.system.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

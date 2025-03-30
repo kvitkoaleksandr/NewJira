@@ -21,4 +21,9 @@ public class RoleChecker {
         }
         return "";
     }
+
+    public String getCurrentEmail(HttpServletRequest request) {
+        String token = extractToken(request);
+        return jwtTokenProvider.getUserEmailFromJWT(token);
+    }
 }
