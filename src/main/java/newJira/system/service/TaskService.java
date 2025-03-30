@@ -1,5 +1,6 @@
 package newJira.system.service;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import newJira.system.dto.task.TaskDto;
@@ -9,14 +10,12 @@ import newJira.system.entity.AppUser;
 import newJira.system.entity.Priority;
 import newJira.system.entity.Status;
 import newJira.system.entity.Task;
-import jakarta.servlet.http.HttpServletRequest;
 import newJira.system.exception.custom.BadRequestException;
 import newJira.system.exception.custom.ForbiddenException;
 import newJira.system.exception.custom.NotFoundException;
 import newJira.system.mapper.TaskMapper;
 import newJira.system.repository.TaskRepository;
 import newJira.system.repository.UserRepository;
-import newJira.system.security.JwtTokenProvider;
 import newJira.system.security.RoleChecker;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
