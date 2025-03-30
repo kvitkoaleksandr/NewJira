@@ -13,7 +13,6 @@ import newJira.system.dto.task.TaskFilterRequestDto;
 import newJira.system.dto.task.TaskStatusUpdateRequestDto;
 import newJira.system.exception.custom.BadRequestException;
 import newJira.system.exception.custom.ForbiddenException;
-import newJira.system.security.JwtTokenProvider;
 import newJira.system.security.RoleChecker;
 import newJira.system.service.TaskService;
 import org.springframework.data.domain.Page;
