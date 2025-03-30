@@ -5,6 +5,7 @@ import newJira.system.dto.CommentDto;
 import newJira.system.entity.Comment;
 import newJira.system.mapper.CommentMapper;
 import newJira.system.repository.CommentRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ public class CommentService {
         return commentMapper.toCommentDto(saved);
     }
 
+    @Cacheable(value = "commentsByTask", key = "#taskId")
     public List<CommentDto> getCommentsByTaskId(Long taskId) {
         return commentRepository.findByTaskId(taskId).stream()
                 .map(commentMapper::toCommentDto)
