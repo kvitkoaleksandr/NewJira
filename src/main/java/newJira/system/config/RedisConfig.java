@@ -20,26 +20,25 @@ import java.time.Duration;
 public class RedisConfig {
 
     @Bean
-    public ObjectMapper objectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.activateDefaultTyping(
+    public RedisCacheConfiguration cacheConfiguration() {
+        ObjectMapper redisMapper = new ObjectMapper();
+        redisMapper.activateDefaultTyping(
                 LaissezFaireSubTypeValidator.instance,
                 ObjectMapper.DefaultTyping.NON_FINAL,
                 JsonTypeInfo.As.PROPERTY
         );
-        return mapper;
-    }
 
-    @Bean
-    public RedisCacheConfiguration cacheConfiguration(ObjectMapper objectMapper) {
-        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+        GenericJackson2JsonRedisSerializer redisSerializer =
+                new GenericJackson2JsonRedisSerializer(redisMapper);
 
         return RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(30))
                 .serializeKeysWith(RedisSerializationContext
                         .SerializationPair
                         .fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer));
+                .serializeValuesWith(RedisSerializationContext
+                        .SerializationPair
+                        .fromSerializer(redisSerializer));
     }
 
     @Bean
@@ -48,10 +47,5 @@ public class RedisConfig {
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(cacheConfiguration)
                 .build();
-    }
-
-    @PostConstruct
-    public void testConfig() {
-        System.out.println("RedisConfig применяется!");
     }
 }

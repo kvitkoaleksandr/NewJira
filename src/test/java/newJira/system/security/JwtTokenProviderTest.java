@@ -3,72 +3,83 @@ package newJira.system.security;
 import newJira.system.entity.AppUser;
 import newJira.system.entity.Role;
 import newJira.system.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.test.context.ActiveProfiles;
+
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-@SpringBootTest
-@ActiveProfiles("test")
-class JwtTokenProviderIntegrationTest {
+class JwtTokenProviderTest {
 
-    @Autowired
     private JwtTokenProvider jwtTokenProvider;
-
-    @Autowired
     private UserRepository userRepository;
 
-    @Test
-    @DisplayName("Генерация, валидация и извлечение email из реального JWT")
-    void jwtTokenFlowTest() {
-        AppUser userEntity = new AppUser();
-        userEntity.setEmail("test@example.com");
-        userEntity.setPassword("encoded");
-        userEntity.setRole(Role.USER);
-        userRepository.save(userEntity);
-
-        UserDetails userDetails = User.builder()
-                .username(userEntity.getEmail())
-                .password(userEntity.getPassword())
-                .authorities("ROLE_USER")
-                .build();
-
-        var auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-
-        String token = jwtTokenProvider.generateToken(auth);
-
-        assertNotNull(token);
-        assertTrue(jwtTokenProvider.validateToken(token));
-        assertEquals(userEntity.getEmail(), jwtTokenProvider.getUserEmailFromJWT(token));
-        assertEquals("USER", jwtTokenProvider.getRoleFromToken(token));
-        assertFalse(jwtTokenProvider.isAdmin(token));
+    @BeforeEach
+    void setUp() {
+        userRepository = mock(UserRepository.class);
+        String secret = "o7HVR1j4MoN3TuWYq6fLSh2cEoDvqX9ijj+f4jsjwgI="; // взять из application.yml
+        jwtTokenProvider = new JwtTokenProvider(secret, userRepository);
     }
 
     @Test
-    @DisplayName("Роль ADMIN извлекается корректно")
-    void isAdminTokenTrueTest() {
-        AppUser admin = new AppUser();
-        admin.setEmail("admin@example.com");
-        admin.setPassword("encoded");
-        admin.setRole(Role.ADMIN);
-        userRepository.save(admin);
+    @DisplayName("Генерация и валидация JWT токена")
+    void generateAndValidateTokenTest() {
+        String email = "test@example.com";
+        String password = "encodedPass";
 
-        UserDetails userDetails = User.builder()
-                .username(admin.getEmail())
-                .password(admin.getPassword())
-                .authorities("ROLE_ADMIN")
-                .build();
+        AppUser appUser = new AppUser();
+        appUser.setEmail(email);
+        appUser.setPassword(password);
+        appUser.setRole(Role.USER);
 
-        var auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        when(userRepository.findByEmail(email)).thenReturn(appUser);
 
-        String token = jwtTokenProvider.generateToken(auth);
+        User springUser = new User(email, password, Collections.emptyList());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(springUser, null);
 
-        assertTrue(jwtTokenProvider.isAdmin(token));
+        String token = jwtTokenProvider.generateToken(authentication);
+
+        assertNotNull(token);
+        assertTrue(jwtTokenProvider.validateToken(token));
+        assertEquals(email, jwtTokenProvider.getUserEmailFromJWT(token));
+        assertEquals("USER", jwtTokenProvider.getRoleFromToken(token));
+    }
+
+    @Test
+    @DisplayName("Проверка isAdmin по токену")
+    void isAdminTest() {
+        String email = "admin@example.com";
+        String password = "encoded";
+        Role role = Role.ADMIN;
+
+        AppUser appUser = new AppUser();
+        appUser.setEmail(email);
+        appUser.setPassword(password);
+        appUser.setRole(role);
+
+        when(userRepository.findByEmail(email)).thenReturn(appUser);
+
+        User user = new User(email, password, Collections.emptyList());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(user, null);
+
+        String token = jwtTokenProvider.generateToken(authentication);
+
+        boolean isAdmin = jwtTokenProvider.isAdmin(token);
+
+        assertTrue(isAdmin);
+    }
+
+    @Test
+    @DisplayName("Валидация невалидного токена")
+    void invalidTokenTest() {
+        String invalidToken = "this.is.not.a.valid.token";
+        assertFalse(jwtTokenProvider.validateToken(invalidToken));
     }
 }
