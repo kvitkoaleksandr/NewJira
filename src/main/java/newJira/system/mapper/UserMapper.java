@@ -8,5 +8,6 @@ import org.mapstruct.ReportingPolicy;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface UserMapper {
     UserDto toUserDto(AppUser appUser);
+
     AppUser toUser(UserDto userDto);
 }

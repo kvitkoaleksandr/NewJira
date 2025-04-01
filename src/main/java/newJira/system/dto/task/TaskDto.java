@@ -5,22 +5,24 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import newJira.system.entity.Priority;
-import newJira.system.entity.Status;
 
+import java.io.Serializable;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TaskDto {
-
+public class TaskDto implements Serializable {
+    private static final long serialVersionUID = 1L;
     private Long id;
-    @NotEmpty(message = "Title is can't be required")
+
+    @NotEmpty(message = "Название задачи обязательно")
     private String title;
-    private Status status = Status.TO_DO;
-    @NotNull(message = "Priority can't be null")
-    private Priority priority;
-    @NotNull(message = "Author can't be null")
+    private String status = "TO_DO";
+
+    @NotNull(message = "Приоритет не может быть пустым")
+    private String priority;
+
+    @NotNull(message = "ID автора обязателен")
     private Long authorId;
     private Long executorId;
 }

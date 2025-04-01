@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import newJira.system.dto.task.TaskDto;
 import newJira.system.dto.task.TaskFilterRequestDto;
+import newJira.system.dto.task.TaskStatusUpdateRequestDto;
 import newJira.system.exception.custom.BadRequestException;
 import newJira.system.exception.custom.ForbiddenException;
 import newJira.system.security.RoleChecker;
@@ -27,6 +28,7 @@ import java.util.List;
 public class TaskController {
     private final TaskService taskService;
     private final RoleChecker roleChecker;
+
 
     @Operation(summary = "Создание новой задачи")
     @SecurityRequirement(name = "BearerAuth")
@@ -105,6 +107,20 @@ public class TaskController {
                                      HttpServletRequest servletRequest) {
         checkAdminAccess(servletRequest);
         return taskService.getTasks(request);
+    }
+
+    @Operation(summary = "Изменить статус задачи (для исполнителя)")
+    @SecurityRequirement(name = "BearerAuth")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Статус успешно обновлён"),
+            @ApiResponse(responseCode = "403", description = "Вы не исполнитель задачи"),
+            @ApiResponse(responseCode = "404", description = "Задача не найдена")
+    })
+    @PatchMapping("/{taskId}/status")
+    public TaskDto updateTaskStatusByExecutor(@PathVariable Long taskId,
+                                              @Valid @RequestBody TaskStatusUpdateRequestDto requestDto,
+                                              HttpServletRequest request) {
+        return taskService.updateStatusByExecutor(taskId, requestDto, request);
     }
 
     private void checkAdminAccess(HttpServletRequest request) {

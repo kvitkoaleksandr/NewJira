@@ -7,9 +7,9 @@ import lombok.Data;
 public class TaskFilterRequestDto {
     private String author;
     private String executor;
-    @NotNull(message = "Page is required")
+    @NotNull(message = "Страница обязательна")
     private Integer page;
 
-    @NotNull(message = "Size is required")
+    @NotNull(message = "Размер страницы обязателен")
     private Integer size;
 }
